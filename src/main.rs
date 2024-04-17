@@ -186,6 +186,7 @@ mod tests {
             show_self: false,
             timestamp: false,
             use_cli: false,
+            base_url_map: None,
         }
     }
 

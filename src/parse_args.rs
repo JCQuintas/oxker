@@ -44,6 +44,18 @@ pub struct Args {
     /// Directory for saving exported logs, defaults to `$HOME`
     #[clap(long="save-dir", short = None)]
     pub save_dir: Option<String>,
+
+    /// Base URL for opening the container in a browser
+    #[clap(long = "base-url-map", short = 'm', value_delimiter = ' ', num_args = 1..)]
+    pub base_url_map: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BaseUrlMap {
+    pub name: Option<String>,
+    pub image: Option<String>,
+    pub label: Option<String>,
+    pub base_url: String,
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +71,7 @@ pub struct CliArgs {
     pub show_self: bool,
     pub timestamp: bool,
     pub use_cli: bool,
+    pub base_url_map: Option<Vec<BaseUrlMap>>,
 }
 
 impl CliArgs {
@@ -73,6 +86,44 @@ impl CliArgs {
         false
     }
 
+    fn parse_base_url_map_input(input: &str) -> BaseUrlMap {
+        let mut name = None;
+        let mut image = None;
+        let mut label = None;
+
+        let mut split = input.splitn(3, ';');
+        let value_type = split.next().map(std::string::ToString::to_string);
+
+        if value_type == Some("name".to_string()) {
+            name = split.next().map(std::string::ToString::to_string);
+        }
+        if value_type == Some("image".to_string()) {
+            image = split.next().map(std::string::ToString::to_string);
+        }
+        if value_type == Some("label".to_string()) {
+            label = split.next().map(std::string::ToString::to_string);
+        }
+
+        if name.is_none() && image.is_none() && label.is_none() {
+            error!("Couldn't parse type, \"-m\" argument needs to be in the format \"name|image|label;value;base_url\"");
+            process::exit(1)
+        }
+
+        let Some(base_url) = split.next().map(std::string::ToString::to_string) else {
+            error!(
+                "Couldn't parse url, \"-m\" argument needs to be in the format \"name|image|label;value;input_url\""
+            );
+            process::exit(1)
+        };
+
+        BaseUrlMap {
+            name,
+            image,
+            label,
+            base_url,
+        }
+    }
+
     /// Parse cli arguments
     pub fn new() -> Self {
         let args = Args::parse();
@@ -82,12 +133,19 @@ impl CliArgs {
             |logs_dir| Some(std::path::Path::new(&logs_dir).to_owned()),
         );
 
+        let base_url_map = args.base_url_map.map(|b| {
+            b.iter()
+                .map(|s| Self::parse_base_url_map_input(s))
+                .collect()
+        });
+
         // Quit the program if the docker update argument is 0
         // Should maybe change it to check if less than 100
         if args.docker_interval == 0 {
             error!("\"-d\" argument needs to be greater than 0");
             process::exit(1)
         }
+
         Self {
             color: args.color,
             docker_interval: args.docker_interval,
@@ -99,6 +157,7 @@ impl CliArgs {
             raw: args.raw,
             show_self: !args.show_self,
             timestamp: !args.timestamp,
+            base_url_map,
         }
     }
 }

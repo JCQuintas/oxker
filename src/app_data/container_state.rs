@@ -4,6 +4,7 @@ use std::{
     fmt,
 };
 
+use crate::parse_args::BaseUrlMap;
 use bollard::service::Port;
 use ratatui::{
     style::Color,
@@ -643,6 +644,26 @@ impl ContainerItem {
     /// So only need to call .lock() once
     pub fn get_chart_data(&self) -> (CpuTuple, MemTuple) {
         (self.get_cpu_chart_data(), self.get_mem_chart_data())
+    }
+
+    pub fn get_mapped_open_urls(&self, base_url_map: Option<&Vec<BaseUrlMap>>) -> Vec<String> {
+        self.ports
+            .into_iter()
+            .filter(|p| p.public.is_some())
+            .map(|p| p.public.unwrap())
+            .map(|p| match base_url_map {
+                Some(vec) => {
+                    let base_url = vec
+                        .iter()
+                        .find(|b| b.name.is_some() && self.name.get() == b.name.unwrap());
+                    match base_url {
+                        Some(b) => format!("{}:{}", b.base_url, p),
+                        None => format!("localhost:{}", p),
+                    }
+                }
+                None => format!("localhost:{}", p),
+            })
+            .collect::<Vec<String>>()
     }
 }
 

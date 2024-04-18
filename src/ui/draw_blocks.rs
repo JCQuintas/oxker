@@ -690,7 +690,7 @@ impl HelpInfo {
             Line::from(vec![
                 space(),
                 button_item("o"),
-                button_desc("open port urls dialog"),
+                button_desc("toggle ports url popup"),
             ]),
             Line::from(vec![space(), button_item("0"), button_desc("stop sort")]),
             Line::from(vec![

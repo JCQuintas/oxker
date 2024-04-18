@@ -17,6 +17,10 @@ services:
       resources:
         limits:
           memory: 1024M
+    ports:
+      - "5432:5432"
+      - "5433:5433"
+      - "5434:5434"
   redis:
     image: redis:alpine3.19
     container_name: redis
@@ -28,6 +32,8 @@ services:
       resources:
         limits:
           memory: 384M
+    ports:
+      - "6379:6379"
   rabbitmq:
     image: rabbitmq:3
     container_name: rabbitmq
@@ -35,6 +41,8 @@ services:
     restart: always
     networks:
       - oxker-example-net
+    ports:
+      - "5672:5672"
     deploy:
       resources:
         limits:

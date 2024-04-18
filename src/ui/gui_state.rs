@@ -45,17 +45,24 @@ impl SelectablePanel {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum Region {
     Panel(SelectablePanel),
     Header(Header),
     Delete(DeleteButton),
+    OpenUrl(OpenUrlButton),
 }
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum DeleteButton {
     Yes,
     No,
+}
+
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub enum OpenUrlButton {
+    Entry(String),
+    Close,
 }
 
 #[allow(unused)]
@@ -166,13 +173,16 @@ pub enum Status {
     Help,
     Init,
     Logs,
+    OpenUrlConfirm,
 }
 
 /// Global gui_state, stored in an Arc<Mutex>
 #[derive(Debug, Default, Clone)]
 pub struct GuiState {
     delete_container: Option<ContainerId>,
+    open_url_buttons: Option<Vec<OpenUrlButton>>,
     delete_map: HashMap<DeleteButton, Rect>,
+    open_url_map: HashMap<OpenUrlButton, Rect>,
     heading_map: HashMap<Header, Rect>,
     is_loading: HashSet<Uuid>,
     loading_index: u8,
@@ -244,6 +254,11 @@ impl GuiState {
                 .entry(button)
                 .and_modify(|w| *w = area)
                 .or_insert(area),
+            Region::OpenUrl(button) => self
+                .open_url_map
+                .entry(button)
+                .and_modify(|w| *w = area)
+                .or_insert(area),
         };
     }
 
@@ -264,6 +279,21 @@ impl GuiState {
         self.delete_container = id;
     }
 
+    pub fn get_open_url_buttons(&self) -> Option<Vec<OpenUrlButton>> {
+        self.open_url_buttons.clone()
+    }
+
+    pub fn set_open_url_buttons(&mut self, buttons: Option<Vec<OpenUrlButton>>) {
+        if buttons.is_some() {
+            self.open_url_buttons = buttons;
+            self.status.insert(Status::OpenUrlConfirm);
+        } else {
+            self.open_url_map.clear();
+            self.open_url_buttons = None;
+            self.status.remove(&Status::OpenUrlConfirm);
+        }
+    }
+
     /// Check if the current gui_status contains any of the given status'
     /// Don't really like this methodology for gui state, needs a re-think
     pub fn status_contains(&self, status: &[Status]) -> bool {
@@ -280,6 +310,9 @@ impl GuiState {
             }
             Status::Exec => {
                 self.exec_mode = None;
+            }
+            Status::OpenUrlConfirm => {
+                self.status.remove(&Status::OpenUrlConfirm);
             }
             _ => (),
         }

@@ -21,7 +21,7 @@ use crate::{
 
 use super::{
     gui_state::{BoxLocation, DeleteButton, Region},
-    FrameData,
+    FrameData, OpenUrlButton,
 };
 use super::{GuiState, SelectablePanel};
 
@@ -806,6 +806,81 @@ pub fn help_box(f: &mut Frame) {
     f.render_widget(help_paragraph, split_popup[2]);
     f.render_widget(final_paragraph, split_popup[3]);
     f.render_widget(block, area);
+}
+
+pub fn open_url_confirm(
+    f: &mut Frame,
+    gui_state: &Arc<Mutex<GuiState>>,
+    buttons: &[OpenUrlButton],
+) {
+    let block = Block::default()
+        .title(" Open Url ")
+        .border_type(BorderType::Rounded)
+        .style(Style::default().bg(Color::White).fg(Color::Black))
+        .title_alignment(Alignment::Center)
+        .borders(Borders::ALL);
+
+    let button_block = || {
+        Block::default()
+            .border_type(BorderType::Rounded)
+            .borders(Borders::ALL)
+            .style(Style::default().bg(Color::White))
+    };
+
+    let button_texts = buttons
+        .iter()
+        .chain(std::iter::once(&OpenUrlButton::Close))
+        .enumerate()
+        .map(|e| match e {
+            (i, OpenUrlButton::Entry(value)) => format!(" ({i}) {value} "),
+            (_, OpenUrlButton::Close) => " (C)lose ".to_string(),
+        });
+
+    let button_paras = button_texts.clone().map(|i| {
+        Paragraph::new(i)
+            .alignment(Alignment::Center)
+            .block(button_block())
+    });
+    let button_count = button_texts.clone().count();
+    let lines = button_count + 8;
+    let max_line_width = button_texts
+        .clone()
+        .map(|i| i.chars().count())
+        .max()
+        .unwrap_or(64)
+        + 12;
+
+    let area = popup(lines, max_line_width, f.size(), BoxLocation::MiddleCentre);
+
+    let split_popup = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(10),
+            Constraint::Percentage(80),
+            Constraint::Percentage(10),
+        ])
+        .split(area);
+
+    let buttons_margins = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(10),
+            Constraint::Percentage(80),
+            Constraint::Percentage(10),
+        ])
+        .split(split_popup[1]);
+
+    let split_buttons = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(button_paras.clone().map(|_| Constraint::Max(3)))
+        .split(buttons_margins[1]);
+
+    f.render_widget(Clear, area);
+    f.render_widget(block, area);
+
+    for (i, button) in button_paras.clone().enumerate() {
+        f.render_widget(button, split_buttons[i]);
+    }
 }
 
 /// Draw the delete confirm box in the centre of the screen

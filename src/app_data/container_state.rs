@@ -648,20 +648,23 @@ impl ContainerItem {
 
     pub fn get_mapped_open_urls(&self, base_url_map: Option<&Vec<BaseUrlMap>>) -> Vec<String> {
         self.ports
+            .clone()
             .into_iter()
-            .filter(|p| p.public.is_some())
-            .map(|p| p.public.unwrap())
-            .map(|p| match base_url_map {
-                Some(vec) => {
-                    let base_url = vec
-                        .iter()
-                        .find(|b| b.name.is_some() && self.name.get() == b.name.unwrap());
-                    match base_url {
-                        Some(b) => format!("{}:{}", b.base_url, p),
-                        None => format!("localhost:{}", p),
-                    }
-                }
-                None => format!("localhost:{}", p),
+            .filter_map(|p| p.public)
+            .map(|p| {
+                base_url_map.map_or_else(
+                    || format!("localhost:{p}"),
+                    |vec| {
+                        let base_url = vec.iter().find(|b| {
+                            b.name.is_some()
+                                && self.name.get() == b.name.as_ref().unwrap_or(&String::new())
+                        });
+                        base_url.map_or_else(
+                            || format!("localhost:{p}",),
+                            |b| format!("{}:{}", b.base_url, p),
+                        )
+                    },
+                )
             })
             .collect::<Vec<String>>()
     }

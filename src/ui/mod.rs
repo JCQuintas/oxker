@@ -24,7 +24,7 @@ mod draw_blocks;
 mod gui_state;
 
 pub use self::color_match::*;
-pub use self::gui_state::{DeleteButton, GuiState, SelectablePanel, Status};
+pub use self::gui_state::{DeleteButton, GuiState, OpenUrlButton, SelectablePanel, Status};
 use crate::{
     app_data::{AppData, Columns, ContainerId, Header, SortedOrder},
     app_error::AppError,
@@ -222,6 +222,7 @@ impl Ui {
 pub struct FrameData {
     columns: Columns,
     delete_confirm: Option<ContainerId>,
+    open_url_buttons: Option<Vec<OpenUrlButton>>,
     has_containers: bool,
     has_error: Option<AppError>,
     height: u16,
@@ -246,6 +247,7 @@ impl From<(MutexGuard<'_, AppData>, MutexGuard<'_, GuiState>)> for FrameData {
         Self {
             columns: data.0.get_width(),
             delete_confirm: data.1.get_delete_container(),
+            open_url_buttons: data.1.get_open_url_buttons(),
             has_containers: data.0.get_container_len() > 0,
             has_error: data.0.get_error(),
             height,
@@ -315,6 +317,10 @@ fn draw_frame(f: &mut Frame, app_data: &Arc<Mutex<AppData>>, gui_state: &Arc<Mut
                 draw_blocks::delete_confirm(f, gui_state, &name);
             },
         );
+    }
+
+    if let Some(buttons) = fd.open_url_buttons.as_ref() {
+        draw_blocks::open_url_confirm(f, gui_state, buttons);
     }
 
     // only draw commands + charts if there are containers

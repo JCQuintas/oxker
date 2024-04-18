@@ -21,7 +21,6 @@ services:
       - "5432:5432"
       - "5433:5433"
       - "5434:5434"
-      - "5422:5422"
     labels:
       - com.oxker.service=postgres
       - com.oxker.target=development
@@ -38,6 +37,7 @@ services:
           memory: 384M
     ports:
       - "6379:6379"
+      - "5422:5422"
     labels:
       - com.oxker.service=redis
       - com.oxker.target=development

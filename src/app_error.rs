@@ -13,7 +13,6 @@ pub enum AppError {
     InputPoll,
     MouseCapture(bool),
     Terminal,
-    OpenUrl,
 }
 
 /// Convert errors into strings to display
@@ -31,7 +30,6 @@ impl fmt::Display for AppError {
                 write!(f, "Unable to {reason}able mouse capture")
             }
             Self::Terminal => write!(f, "Unable to fully render to terminal"),
-            Self::OpenUrl => write!(f, "Unable to open url"),
         }
     }
 }

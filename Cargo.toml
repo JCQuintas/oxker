@@ -33,7 +33,6 @@ clap = { version = "4.5", features = ["color", "derive", "unicode"] }
 crossterm = "0.27"
 directories = "5.0"
 futures-util = "0.3"
-open = "5.1.2"
 parking_lot = { version = "0.12" }
 ratatui = "0.26"
 tokio = { version = "1.37", features = ["full"] }

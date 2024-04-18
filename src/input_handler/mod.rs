@@ -124,27 +124,27 @@ impl InputHandler {
         }
     }
 
-    fn direct_open(&self, url: &str) {
-        print!("{url}");
-    }
-
-    fn confirm_open(&self, url_button: usize) {
-        let buttons = self.gui_state.lock().get_open_url_buttons();
-        if let Some(buttons) = buttons {
-            let url_button = buttons.get(url_button);
-            if let Some(OpenUrlButton::Entry(url)) = url_button {
-                self.direct_open(url);
-            }
-        }
-    }
-
-    fn clear_open(&self) {
+    fn clear_open_url(&self) {
         self.gui_state.lock().set_open_url_buttons(None);
     }
 
     /// This is executed from the Delete Confirm dialog, and will clear the delete_container information (removes id and closes panel)
     fn clear_delete(&self) {
         self.gui_state.lock().set_delete_container(None);
+    }
+
+    fn open_url_popup(&self) {
+        let option_container = self.app_data.lock().get_selected_container().cloned();
+        let base_url_map = self.app_data.lock().args.base_url_map.clone();
+
+        if let Some(container) = option_container {
+            let buttons = container
+                .get_mapped_open_urls(base_url_map.as_ref())
+                .iter()
+                .map(|p| OpenUrlButton::Entry(p.clone()))
+                .collect::<Vec<OpenUrlButton>>();
+            self.gui_state.lock().set_open_url_buttons(Some(buttons));
+        }
     }
 
     /// Validate that one can exec into a Docker container
@@ -407,33 +407,31 @@ impl InputHandler {
             }
 
             if contains_error {
-                if let KeyCode::Char('c' | 'C') = key_code {
-                    self.app_data.lock().remove_error();
-                    self.gui_state.lock().status_del(Status::Error);
+                match key_code {
+                    KeyCode::Esc | KeyCode::Char('c' | 'C') => {
+                        self.app_data.lock().remove_error();
+                        self.gui_state.lock().status_del(Status::Error);
+                    }
+                    _ => (),
                 }
             } else if contains_help {
                 match key_code {
-                    KeyCode::Char('h' | 'H') => self.gui_state.lock().status_del(Status::Help),
+                    KeyCode::Esc | KeyCode::Char('h' | 'H') => {
+                        self.gui_state.lock().status_del(Status::Help);
+                    }
                     KeyCode::Char('m' | 'M') => self.m_key(),
                     _ => (),
                 }
             } else if contains_delete {
                 match key_code {
                     KeyCode::Char('y' | 'Y') => self.confirm_delete().await,
-                    KeyCode::Char('n' | 'N') => self.clear_delete(),
+                    KeyCode::Esc | KeyCode::Char('n' | 'N') => self.clear_delete(),
                     _ => (),
                 }
             } else if contains_open {
                 // Not pretty, but it works
                 match key_code {
-                    KeyCode::Char('0') => self.confirm_open(0),
-                    KeyCode::Char('1') => self.confirm_open(1),
-                    KeyCode::Char('2') => self.confirm_open(2),
-                    KeyCode::Char('3') => self.confirm_open(3),
-                    KeyCode::Char('4') => self.confirm_open(4),
-                    KeyCode::Char('5') => self.confirm_open(5),
-                    KeyCode::Char('6') => self.confirm_open(6),
-                    KeyCode::Char('c' | 'C') => self.clear_open(),
+                    KeyCode::Esc | KeyCode::Char('o' | 'O') => self.clear_open_url(),
                     _ => (),
                 }
             } else {
@@ -450,20 +448,7 @@ impl InputHandler {
                     KeyCode::Char('9') => self.sort(Header::Tx),
                     KeyCode::Char('e' | 'E') => self.e_key().await,
                     KeyCode::Char('h' | 'H') => self.gui_state.lock().status_push(Status::Help),
-                    KeyCode::Char('o' | 'O') => {
-                        let option_container =
-                            self.app_data.lock().get_selected_container().cloned();
-                        let base_url_map = self.app_data.lock().args.base_url_map.clone();
-
-                        if let Some(container) = option_container {
-                            let buttons = container
-                                .get_mapped_open_urls(base_url_map.as_ref())
-                                .iter()
-                                .map(|p| OpenUrlButton::Entry(p.clone()))
-                                .collect::<Vec<OpenUrlButton>>();
-                            self.gui_state.lock().set_open_url_buttons(Some(buttons));
-                        }
-                    }
+                    KeyCode::Char('o' | 'O') => self.open_url_popup(),
                     KeyCode::Char('m' | 'M') => self.m_key(),
                     KeyCode::Char('s' | 'S') => self.s_key().await,
                     KeyCode::Tab => self.tab_key(),
@@ -503,20 +488,6 @@ impl InputHandler {
                 match button {
                     DeleteButton::Yes => self.confirm_delete().await,
                     DeleteButton::No => self.clear_delete(),
-                }
-            }
-
-            let open_url_intersect = self.gui_state.lock().open_url_intersect(Rect::new(
-                mouse_event.column,
-                mouse_event.row,
-                1,
-                1,
-            ));
-
-            if let Some(button) = open_url_intersect {
-                match button {
-                    OpenUrlButton::Entry(url) => self.direct_open(&url),
-                    OpenUrlButton::Close => self.clear_open(),
                 }
             }
         }

@@ -827,14 +827,12 @@ pub fn open_url_confirm(
             .style(Style::default().bg(Color::White))
     };
 
-    let button_texts = buttons
-        .iter()
-        .chain(std::iter::once(&OpenUrlButton::Close))
-        .enumerate()
-        .map(|e| match e {
-            (i, OpenUrlButton::Entry(value)) => format!(" ({i}) {value} "),
-            (_, OpenUrlButton::Close) => " (C)lose ".to_string(),
-        });
+    let all_buttons = [buttons, &[OpenUrlButton::Close]].concat();
+
+    let button_texts = all_buttons.iter().enumerate().map(|e| match e {
+        (i, OpenUrlButton::Entry(value)) => format!(" ({i}) {value} "),
+        (_, OpenUrlButton::Close) => " (C)lose ".to_string(),
+    });
 
     let button_paras = button_texts.clone().map(|i| {
         Paragraph::new(i)
@@ -880,6 +878,9 @@ pub fn open_url_confirm(
 
     for (i, button) in button_paras.clone().enumerate() {
         f.render_widget(button, split_buttons[i]);
+        gui_state
+            .lock()
+            .update_region_map(Region::OpenUrl(all_buttons[i].clone()), split_buttons[i]);
     }
 }
 

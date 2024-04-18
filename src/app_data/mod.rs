@@ -2,6 +2,7 @@ use bollard::models::ContainerSummary;
 use core::fmt;
 use parking_lot::Mutex;
 use ratatui::widgets::{ListItem, ListState};
+
 use std::{
     sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
@@ -639,6 +640,12 @@ impl AppData {
                     .as_ref()
                     .map_or(String::new(), std::clone::Clone::clone);
 
+                let labels = i.labels.as_ref().map_or(vec![], |i| {
+                    i.iter()
+                        .map(|(k, v)| (k.as_str().to_owned(), v.as_str().to_owned()))
+                        .collect::<Vec<_>>()
+                });
+
                 let created = i
                     .created
                     .map_or(0, |i| u64::try_from(i).unwrap_or_default());
@@ -663,6 +670,7 @@ impl AppData {
                     };
 
                     item.ports = ports;
+                    item.labels = labels;
 
                     if item.image.get() != image {
                         item.image.set(image);
@@ -670,7 +678,7 @@ impl AppData {
                 } else {
                     // container not known, so make new ContainerItem and push into containers Vec
                     let container = ContainerItem::new(
-                        created, id, image, is_oxker, name, ports, state, status,
+                        created, id, image, is_oxker, labels, name, ports, state, status,
                     );
                     self.containers.items.push(container);
                 }
@@ -1378,6 +1386,7 @@ mod tests {
                     ContainerId::from("1"),
                     "image_1".to_owned(),
                     false,
+                    vec![],
                     "container_1".to_owned(),
                     vec![],
                     state,

@@ -21,6 +21,9 @@ services:
       - "5432:5432"
       - "5433:5433"
       - "5434:5434"
+    labels:
+      - com.oxker.service=postgres
+      - com.oxker.target=development
   redis:
     image: redis:alpine3.19
     container_name: redis
@@ -34,6 +37,9 @@ services:
           memory: 384M
     ports:
       - "6379:6379"
+    labels:
+      - com.oxker.service=redis
+      - com.oxker.target=development
   rabbitmq:
     image: rabbitmq:3
     container_name: rabbitmq
@@ -47,5 +53,6 @@ services:
       resources:
         limits:
           memory: 512M
-
-
+    labels:
+      - com.oxker.service=rabbitmq
+      - com.oxker.target=development

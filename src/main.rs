@@ -167,6 +167,8 @@ async fn main() {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::many_single_char_names, unused)]
 mod tests {
+    use std::vec;
+
     use bollard::service::{ContainerSummary, Port};
 
     use crate::{
@@ -196,6 +198,7 @@ mod tests {
             id.clone(),
             format!("image_{index}"),
             false,
+            vec![],
             format!("container_{index}"),
             vec![ContainerPorts {
                 ip: None,

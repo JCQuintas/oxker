@@ -532,6 +532,7 @@ pub struct ContainerItem {
     pub id: ContainerId,
     pub image: ContainerImage,
     pub is_oxker: bool,
+    pub labels: Vec<(String, String)>,
     pub last_updated: u64,
     pub logs: Logs,
     pub mem_limit: ByteStats,
@@ -566,6 +567,7 @@ impl ContainerItem {
         id: ContainerId,
         image: String,
         is_oxker: bool,
+        labels: Vec<(String, String)>,
         name: String,
         ports: Vec<ContainerPorts>,
         state: State,
@@ -581,6 +583,7 @@ impl ContainerItem {
             id,
             image: image.into(),
             is_oxker,
+            labels,
             last_updated: 0,
             logs: Logs::default(),
             mem_limit: ByteStats::default(),
@@ -656,8 +659,19 @@ impl ContainerItem {
                     || format!("localhost:{p}"),
                     |vec| {
                         let base_url = vec.iter().find(|b| {
-                            b.name.is_some()
-                                && self.name.get() == b.name.as_ref().unwrap_or(&String::new())
+                            let is_same_name = b.name.is_some()
+                                && self.name.get() == b.name.as_ref().unwrap_or(&String::new());
+
+                            let is_same_image = b.image.is_some()
+                                && self.image.get() == b.image.as_ref().unwrap_or(&String::new());
+
+                            let has_label = b.label.is_some()
+                                && self.labels.iter().any(|l| {
+                                    format!("{}={}", l.0, l.1)
+                                        == b.label.clone().unwrap_or_default()
+                                });
+
+                            is_same_name || is_same_image || has_label
                         });
                         base_url.map_or_else(
                             || format!("localhost:{p}",),

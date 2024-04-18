@@ -813,11 +813,7 @@ pub fn help_box(f: &mut Frame) {
     f.render_widget(block, area);
 }
 
-pub fn open_url_confirm(
-    f: &mut Frame,
-    gui_state: &Arc<Mutex<GuiState>>,
-    buttons: &[OpenUrlButton],
-) {
+pub fn open_url_confirm(f: &mut Frame, buttons: &[OpenUrlButton]) {
     let block = Block::default()
         .title(" Open Url ")
         .border_type(BorderType::Rounded)
@@ -825,27 +821,18 @@ pub fn open_url_confirm(
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL);
 
-    let button_block = || {
-        Block::default()
-            .border_type(BorderType::Rounded)
-            .borders(Borders::ALL)
-            .style(Style::default().bg(Color::White))
-    };
-
-    let all_buttons = [buttons, &[OpenUrlButton::Close]].concat();
-
-    let button_texts = all_buttons.iter().enumerate().map(|e| match e {
-        (i, OpenUrlButton::Entry(value)) => format!(" ({i}) {value} "),
-        (_, OpenUrlButton::Close) => " (C)lose ".to_string(),
+    let button_texts = buttons.iter().map(|e| match e {
+        OpenUrlButton::Entry(value) => format!(" {value} "),
     });
 
-    let button_paras = button_texts.clone().map(|i| {
-        Paragraph::new(i)
-            .alignment(Alignment::Center)
-            .block(button_block())
-    });
+    let button_lines = button_texts
+        .clone()
+        .flat_map(|i| [Line::default(), Line::from(i).centered()])
+        .chain([Line::default()])
+        .collect::<Vec<Line>>();
+    let button_paragraph = Paragraph::new(button_lines);
     let button_count = button_texts.clone().count();
-    let lines = button_count + 10;
+    let lines = button_count * 2 + 1 + 2;
     let max_line_width = button_texts
         .clone()
         .map(|i| i.chars().count())
@@ -873,20 +860,14 @@ pub fn open_url_confirm(
         ])
         .split(split_popup[1]);
 
-    let split_buttons = Layout::default()
+    let split_paragraph = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(button_paras.clone().map(|_| Constraint::Max(3)))
+        .constraints([Constraint::Percentage(100)])
         .split(buttons_margins[1]);
 
     f.render_widget(Clear, area);
     f.render_widget(block, area);
-
-    for (i, button) in button_paras.clone().enumerate() {
-        f.render_widget(button, split_buttons[i]);
-        gui_state
-            .lock()
-            .update_region_map(Region::OpenUrl(all_buttons[i].clone()), split_buttons[i]);
-    }
+    f.render_widget(button_paragraph, split_paragraph[0]);
 }
 
 /// Draw the delete confirm box in the centre of the screen

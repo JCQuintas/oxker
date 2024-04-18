@@ -320,7 +320,7 @@ fn draw_frame(f: &mut Frame, app_data: &Arc<Mutex<AppData>>, gui_state: &Arc<Mut
     }
 
     if let Some(buttons) = fd.open_url_buttons.as_ref() {
-        draw_blocks::open_url_confirm(f, gui_state, buttons);
+        draw_blocks::open_url_confirm(f, buttons);
     }
 
     // only draw commands + charts if there are containers

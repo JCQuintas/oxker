@@ -45,12 +45,11 @@ impl SelectablePanel {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Region {
     Panel(SelectablePanel),
     Header(Header),
     Delete(DeleteButton),
-    OpenUrl(OpenUrlButton),
 }
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
@@ -62,7 +61,6 @@ pub enum DeleteButton {
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum OpenUrlButton {
     Entry(String),
-    Close,
 }
 
 #[allow(unused)]
@@ -226,16 +224,6 @@ impl GuiState {
             .map(|data| *data.0)
     }
 
-    pub fn open_url_intersect(&mut self, rect: Rect) -> Option<OpenUrlButton> {
-        self.open_url_map
-            .iter()
-            .filter(|i| i.1.intersects(rect))
-            .map(|data| data.0.clone())
-            .collect::<Vec<_>>()
-            .first()
-            .cloned()
-    }
-
     /// Check if a given Rect (a clicked area of 1x1), interacts with any known panels
     pub fn header_intersect(&mut self, rect: Rect) -> Option<Header> {
         self.heading_map
@@ -261,11 +249,6 @@ impl GuiState {
                 .or_insert(area),
             Region::Delete(button) => self
                 .delete_map
-                .entry(button)
-                .and_modify(|w| *w = area)
-                .or_insert(area),
-            Region::OpenUrl(button) => self
-                .open_url_map
                 .entry(button)
                 .and_modify(|w| *w = area)
                 .or_insert(area),

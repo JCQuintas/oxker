@@ -125,7 +125,17 @@ impl InputHandler {
     }
 
     fn direct_open(&self, url: &str) {
-        print!("{url}");
+        match open::that_detached(url) {
+            Err(err) => {
+                println!("Unable to open url {err}");
+                self.app_data
+                    .lock()
+                    .set_error(AppError::OpenUrl, &self.gui_state, Status::Error);
+            }
+            _ => {
+                self.gui_state.lock().set_info_box(&format!("opened {url}"));
+            }
+        }
     }
 
     fn confirm_open(&self, url_button: usize) {

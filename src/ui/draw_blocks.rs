@@ -687,6 +687,11 @@ impl HelpInfo {
                     "toggle mouse capture - if disabled, text on screen can be selected & copied",
                 ),
             ]),
+            Line::from(vec![
+                space(),
+                button_item("o"),
+                button_desc("open port urls dialog"),
+            ]),
             Line::from(vec![space(), button_item("0"), button_desc("stop sort")]),
             Line::from(vec![
                 space(),
@@ -840,7 +845,7 @@ pub fn open_url_confirm(
             .block(button_block())
     });
     let button_count = button_texts.clone().count();
-    let lines = button_count + 8;
+    let lines = button_count + 10;
     let max_line_width = button_texts
         .clone()
         .map(|i| i.chars().count())
@@ -853,9 +858,9 @@ pub fn open_url_confirm(
     let split_popup = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(10),
-            Constraint::Percentage(80),
-            Constraint::Percentage(10),
+            Constraint::Min(1),
+            Constraint::Percentage(100),
+            Constraint::Min(1),
         ])
         .split(area);
 

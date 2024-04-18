@@ -124,12 +124,16 @@ impl InputHandler {
         }
     }
 
+    fn direct_open(&self, url: &str) {
+        print!("{url}");
+    }
+
     fn confirm_open(&self, url_button: usize) {
         let buttons = self.gui_state.lock().get_open_url_buttons();
         if let Some(buttons) = buttons {
             let url_button = buttons.get(url_button);
             if let Some(OpenUrlButton::Entry(url)) = url_button {
-                print!("{url}");
+                self.direct_open(url);
             }
         }
     }
@@ -499,6 +503,20 @@ impl InputHandler {
                 match button {
                     DeleteButton::Yes => self.confirm_delete().await,
                     DeleteButton::No => self.clear_delete(),
+                }
+            }
+
+            let open_url_intersect = self.gui_state.lock().open_url_intersect(Rect::new(
+                mouse_event.column,
+                mouse_event.row,
+                1,
+                1,
+            ));
+
+            if let Some(button) = open_url_intersect {
+                match button {
+                    OpenUrlButton::Entry(url) => self.direct_open(&url),
+                    OpenUrlButton::Close => self.clear_open(),
                 }
             }
         }

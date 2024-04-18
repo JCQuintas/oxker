@@ -226,6 +226,16 @@ impl GuiState {
             .map(|data| *data.0)
     }
 
+    pub fn open_url_intersect(&mut self, rect: Rect) -> Option<OpenUrlButton> {
+        self.open_url_map
+            .iter()
+            .filter(|i| i.1.intersects(rect))
+            .map(|data| data.0.clone())
+            .collect::<Vec<_>>()
+            .first()
+            .cloned()
+    }
+
     /// Check if a given Rect (a clicked area of 1x1), interacts with any known panels
     pub fn header_intersect(&mut self, rect: Rect) -> Option<Header> {
         self.heading_map

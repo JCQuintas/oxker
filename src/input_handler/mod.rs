@@ -135,11 +135,11 @@ impl InputHandler {
 
     fn open_url_popup(&self) {
         let option_container = self.app_data.lock().get_selected_container().cloned();
-        let base_url_map = self.app_data.lock().args.base_url_map.clone();
+        let base_url_map = &self.app_data.lock().args.base_url_map;
 
         if let Some(container) = option_container {
             let buttons = container
-                .get_mapped_open_urls(base_url_map.as_ref())
+                .get_mapped_open_urls(base_url_map)
                 .iter()
                 .map(|p| OpenUrlButton::Entry(p.clone()))
                 .collect::<Vec<OpenUrlButton>>();

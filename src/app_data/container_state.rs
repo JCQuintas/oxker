@@ -649,14 +649,16 @@ impl ContainerItem {
         (self.get_cpu_chart_data(), self.get_mem_chart_data())
     }
 
-    pub fn get_mapped_open_urls(&self, base_url_map: Option<&Vec<BaseUrlMap>>) -> Vec<String> {
+    pub fn get_mapped_open_urls(&self, base_url_map: &Option<Vec<BaseUrlMap>>) -> Vec<String> {
         self.ports
             .clone()
             .into_iter()
-            .filter_map(|p| p.public)
+            .filter(|p| p.public.is_some())
             .map(|p| {
-                base_url_map.map_or_else(
-                    || format!("localhost:{p}"),
+                let ip = p.ip.unwrap_or_default();
+                let public = p.public.unwrap_or_default();
+                base_url_map.as_ref().map_or_else(
+                    || format!("{ip}:{public}"),
                     |vec| {
                         let base_url = vec.iter().find(|b| {
                             let is_same_name = b.name.is_some()
@@ -674,8 +676,8 @@ impl ContainerItem {
                             is_same_name || is_same_image || has_label
                         });
                         base_url.map_or_else(
-                            || format!("localhost:{p}",),
-                            |b| format!("{}:{}", b.base_url, p),
+                            || format!("{ip}:{public}"),
+                            |b| format!("{}:{:?}", b.base_url, public),
                         )
                     },
                 )

@@ -104,15 +104,27 @@ impl CliArgs {
             label = split.next().map(std::string::ToString::to_string);
         }
 
+        let error_message = "ERROR: Couldn't parse input.
+The \"-m\" argument needs to be in the format \"type;value;base_url\"
+where type is one of \"name\", \"image\", or \"label\" and value is the value of the type.
+        
+Examples:
+  -m \"name;my_container;http://localhost:{{port}}\"
+  -m \"image;oxker:1.1;http://{{container_name}}.local\"
+  -m \"label;com.example.my_label=label_value;http://localhost\"
+
+The base_url can contain \"{{port}}\", \"{{container_id}}\", \"{{container_name}}\" and \"{{container_image}}\" 
+which will be replaced with the appropriate values.
+
+For multiple base_url_map arguments, separate them with a space or use the argument multiple times.";
+
         if name.is_none() && image.is_none() && label.is_none() {
-            error!("Couldn't parse type, \"-m\" argument needs to be in the format \"name|image|label;value;base_url\"");
+            eprintln!("{error_message}");
             process::exit(1)
         }
 
         let Some(base_url) = split.next().map(std::string::ToString::to_string) else {
-            error!(
-                "Couldn't parse url, \"-m\" argument needs to be in the format \"name|image|label;value;input_url\""
-            );
+            eprintln!("{error_message}");
             process::exit(1)
         };
 
